@@ -1,5 +1,7 @@
 import requests
 from datetime import datetime,timedelta
+import pandas as pd
+import matplotlib.pyplot as plt
 
 class Weather:
     
@@ -45,12 +47,29 @@ class Weather:
         marine_string = r'https://marine-api.open-meteo.com/v1/marine?latitude={}&longitude={}&hourly=wave_height,wave_direction,wave_period,wind_wave_height,wind_wave_direction,wind_wave_period,wind_wave_peak_period&daily=wave_height_max,wave_direction_dominant,wave_period_max&timezone=America%2FChicago&start_date={}&end_date={}'.format(self.lat,self.long,start_date,end_date)
         return self.httprequest(marine_string)
     
+    def marine_df_to_graph(self):
+        
+        df_json = pd.DataFrame.from_dict(eval(self.forecastget()))
+
+        print(df_json)
+        print(df_json.dtypes)
+        print(df_json.info)
+        
+        df2 = pd.DataFrame(df_json['hourly']['temperature_2m'])
+
+        df2.plot.line(subplots = True)
+        plt.show()
+        return df_json
+    
 if __name__ == "__main__":
     Htx = Weather(29.76,-95.36)
-    Htx.forecastget()
-    Htx.airqualityget()
-    Htx.marineget(7)
+    x = Htx.forecastget()
+    y = Htx.airqualityget()
+    z = Htx.marineget(7)
+    a1 = Htx.marine_df_to_graph()
     
+
+    print(z)
     
     
 
