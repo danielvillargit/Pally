@@ -16,7 +16,7 @@ class Weather:
         http_r = requests.get(http_string)
         if http_r.status_code == 200:
                print("Successful Request Grab (200)")
-               return http_r.text
+               return http_r.json()
         else:
             http_r.raise_for_status()
         
@@ -47,29 +47,46 @@ class Weather:
         marine_string = r'https://marine-api.open-meteo.com/v1/marine?latitude={}&longitude={}&hourly=wave_height,wave_direction,wave_period,wind_wave_height,wind_wave_direction,wind_wave_period,wind_wave_peak_period&daily=wave_height_max,wave_direction_dominant,wave_period_max&timezone=America%2FChicago&start_date={}&end_date={}'.format(self.lat,self.long,start_date,end_date)
         return self.httprequest(marine_string)
     
-    def marine_df_to_graph(self):
+    def sql_connect_forecast(self,dict_insert):
         
-        df_json = pd.DataFrame.from_dict(eval(self.forecastget()))
-
-        print(df_json)
-        print(df_json.dtypes)
-        print(df_json.info)
+        #lst = [(a,b) for a,b in dict_insert.get('hourly').items() ]
+        #lst = [ lst[i][1] for i in range(5)]
         
-        df2 = pd.DataFrame(df_json['hourly']['temperature_2m'])
+        
+        
+        df = pd.DataFrame.from_dict(dict_insert.get('hourly'))
+        df.columns = ['time','temp','precipitation','cloudcover','visbility']
+        print(df.head())
+        import sqlite3
+        con = sqlite3.connect("pally_meta.db")
+        cur = con.cursor()
+        
+        
+        
+        
+        
+        cur.execute("CREATE TABLE IF NOT EXISTS forecast (time, temp, precipitation, cloudcover, visibility)")
+        con.commit()
+        
+        df.to_sql('forecast',con,if_exists = 'replace')
+        #cur.executemany("INSERT INTO forecast VALUES (?,?,?,?,?)", [(df[i] for i in range(5))] )
+        
+        cur.execute("SELECT * FROM forecast")
+        for row in cur.fetchall():
+            print(row)
 
-        df2.plot.line(subplots = True)
-        plt.show()
-        return df_json
     
 if __name__ == "__main__":
     Htx = Weather(29.76,-95.36)
     x = Htx.forecastget()
-    y = Htx.airqualityget()
-    z = Htx.marineget(7)
-    a1 = Htx.marine_df_to_graph()
+    print(type(x))
+    Htx.sql_connect_forecast(x)
+    #y = Htx.airqualityget()
+    #z = Htx.marineget(7)
+    #a1 = Htx.marine_df_to_graph()
     
 
-    print(z)
+    #print(z)
     
     
 
